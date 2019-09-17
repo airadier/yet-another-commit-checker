@@ -66,7 +66,16 @@ public class YaccHook implements PreRepositoryHook {
             @Nonnull RepositoryPushHookRequest repositoryPushHookRequest) {
         final Settings settings = context.getSettings();
 
-        return yaccService.check(context, repositoryPushHookRequest, settings);
+        long startTime = System.currentTimeMillis();
+        log.warn("YACC Check push {} / {}", repositoryPushHookRequest.getRepository().getProject().getName(), repositoryPushHookRequest.getRepository().getName());
+
+        RepositoryHookResult result = yaccService.check(context, repositoryPushHookRequest, settings);
+
+        long endTime = System.currentTimeMillis();
+        long timeElapsed = endTime - startTime;
+        log.warn("YACC Finished push {} / {} - " + timeElapsed + "ms" , repositoryPushHookRequest.getRepository().getProject().getName(), repositoryPushHookRequest.getRepository().getName());
+
+        return result;
     }
 
     static RepositoryHookResult handleBranchCreation(@Nonnull Settings settings,
@@ -76,7 +85,15 @@ public class YaccHook implements PreRepositoryHook {
         log.debug("branch creation hook: id={} displayId={}",
                 branch.getId(), branch.getDisplayId());
 
+        long startTime = System.currentTimeMillis();
+        log.warn("YACC Check branch {} / {}", branchCreationHookRequest.getRepository().getProject().getName(), branchCreationHookRequest.getRepository().getName());
+
         List<YaccError> errors = new BranchNameCheck(settings, branch.getId()).check();
+
+        long endTime = System.currentTimeMillis();
+        long timeElapsed = endTime - startTime;
+        log.warn("YACC Finished branch {} / {} - " + timeElapsed + "ms" , branchCreationHookRequest.getRepository().getProject().getName(), branchCreationHookRequest.getRepository().getName());
+
 
         if (!errors.isEmpty()) {
             return RepositoryHookResult.rejected(
