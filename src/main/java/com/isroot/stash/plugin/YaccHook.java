@@ -69,7 +69,14 @@ public class YaccHook implements PreRepositoryHook {
         long startTime = System.currentTimeMillis();
         log.warn("YACC Check push {} / {}", repositoryPushHookRequest.getRepository().getProject().getName(), repositoryPushHookRequest.getRepository().getName());
 
-        RepositoryHookResult result = yaccService.check(context, repositoryPushHookRequest, settings);
+        RepositoryHookResult result;
+        try {
+            result = yaccService.check(context, repositoryPushHookRequest, settings);
+        } catch (TimeLimitedMatcherFactory.RegExpTimeoutException e) {
+            log.error("YACC Regex timeout for {} / {}", repositoryPushHookRequest.getRepository().getProject().getName(), repositoryPushHookRequest.getRepository().getName());
+            log.error("YACC Regex timeout exceeded", e);
+            result = RepositoryHookResult.rejected("Regex timeout exceeded", "The timeout for evaluating regular expression has been exceeded");
+        }
 
         long endTime = System.currentTimeMillis();
         long timeElapsed = endTime - startTime;
